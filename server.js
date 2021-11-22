@@ -19,22 +19,16 @@ app.get('/', (req, res) => {
 app.post('/assignment_callback', (req, res) => {
     res.send({
         status: 200,
-        message: {}
+        instruction: 'accept'
     })
 })
 
 app.get('/assignment_callback', (req, res) => {
     res.send({
         status: 200,
-        message: {}
+        instruction: 'accept'
     });
 })
-
-// app.post('/create_task', (req, res) => {
-//     res.send({
-//         message: "I like it here!"
-//     })
-// })
 
 app.post('/create_task', function (req, res) {
     client.taskrouter.workspaces(workspaceSid)
@@ -48,7 +42,23 @@ app.post('/create_task', function (req, res) {
         .then(task => {
             res.send(task.sid)
         });
-})
+    });
+
+    app.post('/accept_reservation', (req, res) => {
+        let task_sid = req.query.task_sid;
+        let reservation_sid = req.query.reservation_sid;
+    client.taskrouter
+        .workspaces(workspaceSid)
+        .tasks(task_sid)
+        .reservations(reservation_sid)
+        .update({
+            reservationStatus: "accepted",
+        })
+        .then(reservation => {
+            res.status(200).json(`"reservation" : ${reservation.sid}`);
+        });
+});
+
 
 app.listen(8001, () => {
     console.log("Now listening on port 8001!");
