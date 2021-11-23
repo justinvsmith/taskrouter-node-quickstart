@@ -4,7 +4,15 @@ const app = express();
 const { urlencoded } = require('body-parser');
 const urlEncoded = require('body-parser').urlencoded;
 
+
+
 const VoiceResponse = require('twilio').twiml.VoiceResponse;
+const taskrouter = require('twilio').jwt.taskrouter;
+const ClientCapability = require('twilio/lib/jwt/ClientCapability');
+const util = taskrouter.util;
+
+const TaskRouterCapability = taskrouter.TaskRouterCapability;
+const Policy = TaskRouterCapability.Policy;
 
 const accountSid = process.env.ACCOUNT_SID;
 const authToken = process.env.AUTH_TOKEN;
@@ -12,6 +20,10 @@ const client = require('twilio')(accountSid, authToken);
 const workspaceSid = process.env.WORKSPACE_SID;
 const workflowSid = process.env.WORKFLOW_SID;
 const postWorkActivitySid = process.env.POST_WORK_ACTIVITY_SID;
+
+const TASKROUTER_BASE_URL = 'https://taskrouter.twilio.com';
+const version = 'v1';
+
 
 
 app.use(urlEncoded({ extended: false }));
@@ -82,6 +94,51 @@ app.post('/enqueue', (req, res) => {
 
     res.type('application/xml');
     res.send(twimlResponse.toString());
+})
+
+app.get('/agents', (req, res) => {
+    worker_sid = req.query.worker_sid;
+    const worker_capability = new TaskRouterCapability({
+        accountSid: accountSid,
+        authToken: authToken,
+        workspaceSid: workspaceSid,
+        channelId: worker_sid
+    });
+
+    function buildWorkspacePolicy(options) {
+        options = options || {};
+        let resources = options.resources || [];
+        let urlComponents = [TASKROUTER_BASE_URL, version, 'Workspaces', workspaceSid]
+
+        return new Policy({
+            url: urlComponents.concat(resources).join('/'),
+            method: options.method || 'GET',
+            allow: true
+        });
+    }
+
+    let eventBridgePolicies = util.defaultEventBridgePolicies(accountSid, worker_sid);
+
+    let workerPolicies = util.defaultWorkerPolicies(version, workspaceSid, worker_sid);
+
+    let workspacePolicies = [
+        //Workspace fetch Policy
+        buildWorkspacePolicy(),
+        //Workspace subresources fetch Policy
+        buildWorkspacePolicy({ resources: ['**'] }),
+        //Workspace Activities Update Policy
+        buildWorkspacePolicy({ resources: ['Activities'], method: 'POST' }),
+        //Workspace Activities Worker Reservations Policy
+        buildWorkspacePolicy({ resources: ['Workers', worker_sid, 'Reservations', '**'], method: 'POST' }),
+    ];
+
+    eventBridgePolicies.concat(workerPolicies).concat(workspacePolicies).forEach(function (policy) {
+        worker_capability.addPolicy(policy);
+    });
+
+    let token = worker_capability.toJwt();
+
+    res.status(200).json({"body": "I did it!"});    
 })
 
 app.listen(8001, () => {
