@@ -21,6 +21,7 @@ app.post('/assignment_callback', (req, res) => {
         status: 200,
         instruction: 'accept'
     })
+
 })
 
 app.get('/assignment_callback', (req, res) => {
@@ -28,6 +29,7 @@ app.get('/assignment_callback', (req, res) => {
         status: 200,
         instruction: 'accept'
     });
+    console.log(req.body)
 })
 
 app.post('/create_task', function (req, res) {
@@ -40,7 +42,7 @@ app.post('/create_task', function (req, res) {
             workflowSid: workflowSid
         })
         .then(task => {
-            res.send(task.sid)
+            res.status(200).json({"task" : task.sid});
         });
     });
 
@@ -55,7 +57,7 @@ app.post('/create_task', function (req, res) {
             reservationStatus: "accepted",
         })
         .then(reservation => {
-            res.status(200).json(`"reservation" : ${reservation.sid}`);
+            res.status(200).json({"reservation" : reservation.sid});
         });
 });
 
