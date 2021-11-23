@@ -125,11 +125,11 @@ app.get('/agents', (req, res) => {
         //Workspace fetch Policy
         buildWorkspacePolicy(),
         //Workspace subresources fetch Policy
-        buildWorkspacePolicy({ resources: ['**'] }),
+        buildWorkspacePolicy({ resources: ['**'], method: 'POST' }),
         //Workspace Activities Update Policy
-        buildWorkspacePolicy({ resources: ['Activities'], method: 'POST' }),
-        //Workspace Activities Worker Reservations Policy
-        buildWorkspacePolicy({ resources: ['Workers', worker_sid, 'Reservations', '**'], method: 'POST' }),
+        // buildWorkspacePolicy({ resources: ['Activities'], method: 'POST' }),
+        // //Workspace Activities Worker Reservations Policy
+        // buildWorkspacePolicy({ resources: ['Workers', worker_sid, 'Reservations', '**'], method: 'POST' }),
     ];
 
     eventBridgePolicies.concat(workerPolicies).concat(workspacePolicies).forEach(function (policy) {
