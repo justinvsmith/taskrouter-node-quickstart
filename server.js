@@ -11,7 +11,6 @@ const authToken = process.env.AUTH_TOKEN;
 const client = require('twilio')(accountSid, authToken);
 const workspaceSid = process.env.WORKSPACE_SID;
 const workflowSid = process.env.WORKFLOW_SID;
-const twilioNumber = process.env.TWILIO_NUMBER;
 const postWorkActivitySid = process.env.POST_WORK_ACTIVITY_SID;
 
 
@@ -27,7 +26,7 @@ app.get('/assignment_callback', (req, res) => {
 })
 
 app.post('/assignment_callback', (req, res) => {
-res.status(200).json({"instruction" : "dequeue", "post_work_activity_sid": "WAae59aa1372ca9762ef87e6eccaf0f1e0", "status": 200});
+res.status(200).json({"instruction" : "dequeue", "post_work_activity_sid": postWorkActivitySid, "status": 200});
 })
 
 app.post('/create_task', function (req, res) {
