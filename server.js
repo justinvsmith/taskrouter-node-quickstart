@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const app = express();
+var cors = require('cors');
 const { urlencoded } = require('body-parser');
 const urlEncoded = require('body-parser').urlencoded;
 
@@ -23,13 +24,19 @@ const postWorkActivitySid = process.env.POST_WORK_ACTIVITY_SID;
 
 const TASKROUTER_BASE_URL = 'https://taskrouter.twilio.com';
 const version = 'v1';
+const pug = require('pug');
+
+app.set('view engine', 'pug');
+app.set('views', './views');
 
 
 
-app.use(urlEncoded({ extended: false }));
+
+app.use(cors(),urlEncoded({ extended: false }));
 
 app.get('/', (req, res) => {
-    res.send('Hello from the server');
+    res.sendFile(__dirname + '/index2.html');
+    // res.send("Hello World!")
 });
 
 app.get('/assignment_callback', (req, res) => {
@@ -38,7 +45,10 @@ app.get('/assignment_callback', (req, res) => {
 })
 
 app.post('/assignment_callback', (req, res) => {
-res.status(200).json({"instruction" : "dequeue", "post_work_activity_sid": postWorkActivitySid, "status": 200});
+res.status(200).json({
+    "instruction" : "dequeue", 
+    "post_work_activity_sid": postWorkActivitySid, 
+    "status": 200});
 })
 
 app.post('/create_task', function (req, res) {
@@ -127,9 +137,9 @@ app.get('/agents', (req, res) => {
         //Workspace subresources fetch Policy
         buildWorkspacePolicy({ resources: ['**'], method: 'POST' }),
         //Workspace Activities Update Policy
-        // buildWorkspacePolicy({ resources: ['Activities'], method: 'POST' }),
+        buildWorkspacePolicy({ resources: ['Activities'], method: 'POST' }),
         // //Workspace Activities Worker Reservations Policy
-        // buildWorkspacePolicy({ resources: ['Workers', worker_sid, 'Reservations', '**'], method: 'POST' }),
+        buildWorkspacePolicy({ resources: ['Workers', worker_sid, 'Reservations', '**'], method: 'POST' }),
     ];
 
     eventBridgePolicies.concat(workerPolicies).concat(workspacePolicies).forEach(function (policy) {
@@ -137,8 +147,10 @@ app.get('/agents', (req, res) => {
     });
 
     let token = worker_capability.toJwt();
-
-    res.status(200).json({"body": "I did it!"});    
+    
+    res.status(200).render('agents.pug', {
+        worker_token:token
+    });    
 })
 
 app.listen(8001, () => {
