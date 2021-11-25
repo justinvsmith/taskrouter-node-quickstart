@@ -106,26 +106,26 @@ app.post('/enqueue', (req, res) => {
     res.send(twimlResponse.toString());
 })
 
+function buildWorkspacePolicy(options) {
+    options = options || {};
+    let resources = options.resources || [];
+    let urlComponents = [TASKROUTER_BASE_URL, version, 'Workspaces', workspaceSid]
+
+    return new Policy({
+        url: urlComponents.concat(resources).join('/'),
+        method: options.method || 'GET',
+        allow: true
+    });
+}
+
 app.get('/agents', (req, res) => {
-    worker_sid = req.query.worker_sid;
+    let worker_sid = req.query.worker_sid;
     const worker_capability = new TaskRouterCapability({
         accountSid: accountSid,
         authToken: authToken,
         workspaceSid: workspaceSid,
         channelId: worker_sid
     });
-
-    function buildWorkspacePolicy(options) {
-        options = options || {};
-        let resources = options.resources || [];
-        let urlComponents = [TASKROUTER_BASE_URL, version, 'Workspaces', workspaceSid]
-
-        return new Policy({
-            url: urlComponents.concat(resources).join('/'),
-            method: options.method || 'GET',
-            allow: true
-        });
-    }
 
     let eventBridgePolicies = util.defaultEventBridgePolicies(accountSid, worker_sid);
 
@@ -135,9 +135,9 @@ app.get('/agents', (req, res) => {
         //Workspace fetch Policy
         buildWorkspacePolicy(),
         //Workspace subresources fetch Policy
-        buildWorkspacePolicy({ resources: ['**'], method: 'POST' }),
+        buildWorkspacePolicy({ resources: ['**'] }),
         //Workspace Activities Update Policy
-        buildWorkspacePolicy({ resources: ['Activities'], method: 'POST' }),
+        buildWorkspacePolicy({ resources: ['**'], method: 'POST' }),
         // //Workspace Activities Worker Reservations Policy
         buildWorkspacePolicy({ resources: ['Workers', worker_sid, 'Reservations', '**'], method: 'POST' }),
     ];
@@ -147,9 +147,11 @@ app.get('/agents', (req, res) => {
     });
 
     let token = worker_capability.toJwt();
+
+    // res.status(200).json(token)
     
     res.status(200).render('agents.pug', {
-        worker_token:token
+        worker_token: token
     });    
 })
 
