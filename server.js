@@ -131,16 +131,35 @@ app.get('/agents', (req, res) => {
 
     let workerPolicies = util.defaultWorkerPolicies(version, workspaceSid, worker_sid);
 
+    // let workspacePolicies = [
+    //     //Workspace fetch Policy
+    //     buildWorkspacePolicy(),
+    //     //Workspace subresources fetch Policy
+    //     buildWorkspacePolicy({ resources: ['**'] }),
+    //     //Workspace Activities Update Policy
+    //     buildWorkspacePolicy({ resources: ['**'], method: 'POST' }),
+    //     // //Workspace Activities Worker Reservations Policy
+    //     buildWorkspacePolicy({ resources: ['Workers', worker_sid, 'Reservations', '**'], method: 'POST' }),
+    // ];
+
     let workspacePolicies = [
-        //Workspace fetch Policy
-        buildWorkspacePolicy(),
-        //Workspace subresources fetch Policy
-        buildWorkspacePolicy({ resources: ['**'] }),
-        //Workspace Activities Update Policy
-        buildWorkspacePolicy({ resources: ['**'], method: 'POST' }),
-        // //Workspace Activities Worker Reservations Policy
-        buildWorkspacePolicy({ resources: ['Workers', worker_sid, 'Reservations', '**'], method: 'POST' }),
-    ];
+        buildWorkspacePolicy({
+            resources: ['Workers', worker_sid],
+            method: 'POST',
+            allow: true,
+            postFilter: { "ActivitySid": { 'required': true } }
+        }),
+        buildWorkspacePolicy({
+            resources: ['Tasks', '**'],
+            method: 'POST',
+            allow: true,
+        }),
+        buildWorkspacePolicy({
+            resources: ['Reservations', "**"],
+            method: 'POST',
+            allow: true,
+        })
+    ]
 
     eventBridgePolicies.concat(workerPolicies).concat(workspacePolicies).forEach(function (policy) {
         worker_capability.addPolicy(policy);
